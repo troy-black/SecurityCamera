@@ -1,20 +1,16 @@
 {
   "cameras": {
     "cam0": {
-      "driver": "GstreamerDriver",
-      "width": 4056,
-      "height": 2288,
-      "framerate": 15,
-      "sensor_id": 0,
-      "overlay": true
+      "driver": "MockDriver",
+      "width": 1280,
+      "height": 720,
+      "framerate": 1
     },
     "cam1": {
-      "driver": "GstreamerDriver",
-      "width": 4056,
-      "height": 2288,
-      "framerate": 15,
-      "sensor_id": 1,
-      "overlay": true
+      "driver": "MockDriver",
+      "width": 1280,
+      "height": 720,
+      "framerate": 1
     }
   },
   "log_level": "DEBUG"

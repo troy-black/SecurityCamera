@@ -1,8 +1,9 @@
 import logging
 
+import gi  # noqa:F401,F402
+
 from securitycamera.camera import CameraDriver
 
-import gi  # noqa:F401,F402
 gi.require_version('GObject', '2.0')
 gi.require_version('Gst', '1.0')
 gi.require_version('GstApp', '1.0')
@@ -11,7 +12,7 @@ from gi.repository import GObject, Gst, GstApp  # noqa:F401,F402
 
 class GstreamerDriver(CameraDriver):
     def __init__(self, identifier: str, sensor_id: int, width: int, height: int, framerate: int,
-                 overlay: bool, debug: bool = False):
+                 overlay: bool, file_sink: bool = False, debug: bool = False):
 
         super().__init__(identifier)
 
@@ -31,10 +32,13 @@ class GstreamerDriver(CameraDriver):
         if overlay:
             last_element = self.build_clockoverlay(source=last_element)
 
-        tee = self.build_tee(source=last_element)
+        if file_sink:
+            last_element = self.build_tee(source=last_element)
 
-        self.build_jpeg_sink(source=tee)
-        self.build_file_sink(source=tee)
+        self.build_jpeg_sink(source=last_element)
+
+        if file_sink:
+            self.build_file_sink(source=last_element)
 
         # noinspection PyUnresolvedReferences
         self.loop = GObject.MainLoop()
@@ -121,7 +125,7 @@ class GstreamerDriver(CameraDriver):
         nvv4l2h264enc.link(h264parse)
 
         splitmuxsink: Gst.Element = Gst.ElementFactory.make('splitmuxsink')
-        splitmuxsink.set_property('location', f'/media/camerasuite/data/Camera/{self._id}_%02d.mp4')
+        splitmuxsink.set_property('location', f'{self._id}_%02d.mp4')
         splitmuxsink.set_property('max-size-bytes', 10000000)
         splitmuxsink.set_property('max-files', 10)
         self.pipeline.add(splitmuxsink)
@@ -184,4 +188,5 @@ class GstreamerDriver(CameraDriver):
             self.running = False
             logging.debug(f'[{self._id}] Loop Quit')
             loop.quit()
+
         return True

@@ -67,10 +67,7 @@ class CameraDriver(ABC):
                 yield b'--frame\r\nContent-Type:image/jpeg\r\n\r\n' + self._last_image_bytes + b'\r\n'
 
             # block this thread until threading event is cleared
-            self._threading_event.wait()
-
-
-drivers: Dict[str, CameraDriver] = {}
+            self._threading_event.wait(1)
 
 
 class CameraDriverFactory:
@@ -90,11 +87,4 @@ class CameraDriverFactory:
 
     @classmethod
     def make(cls, driver_name: str, identifier: str, **kwargs) -> CameraDriver:
-        if identifier in drivers:
-            raise ValueError('Driver identifier is already present')
-
-        driver: CameraDriver = cls.get_class(driver_name)(identifier, **kwargs)
-
-        drivers[identifier] = driver
-
-        return driver
+        return cls.get_class(driver_name)(identifier, **kwargs)

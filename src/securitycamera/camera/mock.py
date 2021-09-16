@@ -8,11 +8,11 @@ from securitycamera.camera import CameraDriver
 
 
 class MockDriver(CameraDriver):
-    def __init__(self, identifier: str, *, width: int = 1920, height: int = 1080, fps: int = 5):
+    def __init__(self, identifier: str, *, width: int = 1920, height: int = 1080, framerate: int = 5):
         super().__init__(identifier)
         self.width = width
         self.height = height
-        self.mock_fps = fps
+        self.mock_framerate = framerate
 
     def _background_loop(self):
         while self.running:
@@ -30,6 +30,6 @@ class MockDriver(CameraDriver):
 
             self._clear_threading_event()
 
-            s = (1 / self.mock_fps) - (time.time() - t)
+            s = (1 / self.mock_framerate) - (time.time() - t)
 
             time.sleep(s if s > 0 else 0)

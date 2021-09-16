@@ -1,14 +1,22 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from starlette.responses import StreamingResponse
 
-from securitycamera.config import config
+from securitycamera import config
+from securitycamera.camera import CameraDriver
 
 router = APIRouter()
 
 
+def get_camera(camera_id: str) -> CameraDriver:
+    if camera_id not in config.Config.cameras:
+        raise HTTPException(status_code=404, detail=f'Camera {camera_id} not found')
+
+    return config.Config.cameras[camera_id]
+
+
 @router.get('/{camera_id}/stream/video')
 async def get_stream_video(camera_id: str):
-    camera = config.cameras[camera_id]
+    camera = get_camera(camera_id)
 
     # return mjpeg video
     return StreamingResponse(
@@ -19,7 +27,7 @@ async def get_stream_video(camera_id: str):
 
 @router.get('/{camera_id}/stream/{action}')
 async def get_stream_action(camera_id: str, action: bool, background_tasks: BackgroundTasks):
-    camera = config.cameras[camera_id]
+    camera = get_camera(camera_id)
 
     camera.running = action
 
