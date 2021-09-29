@@ -7,6 +7,7 @@ from securitycamera import logger
 
 def main():
     # TODO - pass cmd args here...
+    config.Config.load()
 
     uvicorn_config = UvicornConfig(
         'src.securitycamera.app:app',

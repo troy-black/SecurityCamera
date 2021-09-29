@@ -2,12 +2,12 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from starlette.responses import StreamingResponse
 
 from securitycamera import config
-from securitycamera.camera import CameraDriver
+from securitycamera.gstreamer import GstreamerCamera
 
 router = APIRouter()
 
 
-def get_camera(camera_id: str) -> CameraDriver:
+def get_camera(camera_id: str) -> GstreamerCamera:
     if camera_id not in config.Config.cameras:
         raise HTTPException(status_code=404, detail=f'Camera {camera_id} not found')
 

@@ -2,11 +2,12 @@ import json
 import os
 from typing import Dict
 
-from securitycamera.camera import CameraDriver, CameraDriverFactory
+from securitycamera.gstreamer import GstreamerCamera
 
 
 class Config:
-    cameras: Dict[str, CameraDriver] = {}
+    cameras: Dict[str, GstreamerCamera] = {}
+    # recorders: Dict[str, GstreamerRecorder] = {}
     log_level: str = 'DEBUG'
 
     @classmethod
@@ -22,7 +23,7 @@ class Config:
                     details.update(result)
 
         cls.cameras = {
-            identifier: CameraDriverFactory.make(camera_details.pop('driver'), identifier, **camera_details)
+            identifier: GstreamerCamera(identifier, **camera_details)
             for identifier, camera_details in details['cameras'].items()
         }
 
