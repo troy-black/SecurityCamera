@@ -7,6 +7,9 @@
       "sensor_id": 0,
       "overlay": true,
       "save": {
+        "location": "~/cam0_%02d.mp4",
+        "max_files": 10,
+        "max_size_bytes": 500000000,
         "playback_framerate": 30,
         "record_framerate": 1
       }
@@ -18,6 +21,9 @@
       "sensor_id": 1,
       "overlay": true,
       "save": {
+        "location": "~/cam1_%02d.mp4",
+        "max_files": 10,
+        "max_size_bytes": 500000000,
         "playback_framerate": 30,
         "record_framerate": 1
       }

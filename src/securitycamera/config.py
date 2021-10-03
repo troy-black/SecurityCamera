@@ -7,7 +7,6 @@ from securitycamera.gstreamer import GstreamerCamera
 
 class Config:
     cameras: Dict[str, GstreamerCamera] = {}
-    # recorders: Dict[str, GstreamerRecorder] = {}
     log_level: str = 'DEBUG'
 
     @classmethod
