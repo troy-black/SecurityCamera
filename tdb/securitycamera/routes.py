@@ -42,8 +42,8 @@ async def get_stream_action(camera_id: str, action: bool, background_tasks: Back
         background_tasks.add_task(camera.background_task)
 
         if camera.recorder:
-            camera.recorder_thread = threading.Thread(target=camera.recorder.background_task)
-            camera.recorder_thread.start()
+            camera.thread = threading.Thread(target=camera.recorder.background_task)
+            camera.thread.start()
 
     return {
         'stream': action
