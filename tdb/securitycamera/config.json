@@ -3,13 +3,14 @@
     "testCam": {
       "element": "videotestsrc",
       "properties": {
-        "pattern": "gamut"
+        "pattern": "ball"
       },
       "caps": "video/x-raw",
       "width": 1280,
       "height": 720,
       "framerate": 5,
       "nvvidconv": "video/x-raw(memory:NVMM)",
+      "overlay": true,
       "recorder": {
         "record_framerate": 1,
         "playback_framerate": 30,
@@ -17,8 +18,7 @@
           "location": "test_%02d.mp4",
           "max-files": 3,
           "max-size-bytes": 5000000
-        },
-        "overlay": true
+        }
       }
     },
     "cam0": {
@@ -30,6 +30,7 @@
       "width": 4056,
       "height": 2288,
       "framerate": 30,
+      "overlay": true,
       "autostart": true,
       "recorder": {
         "record_framerate": 1,
@@ -38,8 +39,7 @@
           "location": "cam0_%02d.mp4",
           "max-files": 10,
           "max-size-bytes": 500000000
-        },
-        "overlay": true
+        }
       }
     },
     "cam1": {
@@ -51,6 +51,7 @@
       "width": 4056,
       "height": 2288,
       "framerate": 30,
+      "overlay": true,
       "autostart": true,
       "recorder": {
         "record_framerate": 1,
@@ -59,8 +60,7 @@
           "location": "cam1_%02d.mp4",
           "max-files": 10,
           "max-size-bytes": 500000000
-        },
-        "overlay": true
+        }
       }
     }
   },

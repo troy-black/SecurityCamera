@@ -18,12 +18,15 @@ class FastApiCameraTester(FastApiBaseTester):
     def test_FullCameraCycle(self):
         # run requests in separate thread
         threads: Dict[str, Thread] = {
-            f'/testCam/stream/True': Thread(target=self.get_stream_action, args=('testCam', True)),
-            f'/testCam/stream/video': Thread(target=self.get_stream_video, args=('testCam',)),
-            f'/testCam/stream/False': Thread(target=self.get_stream_action, args=('testCam', False)),
+            f'/testCam01/stream/True': Thread(target=self.get_stream_action, args=('testCam01', True)),
+            f'/testCam02/stream/True': Thread(target=self.get_stream_action, args=('testCam02', True)),
+            f'/testCam01/stream/video': Thread(target=self.get_stream_video, args=('testCam01',)),
+            f'/testCam02/stream/video': Thread(target=self.get_stream_video, args=('testCam02',)),
+            f'/testCam01/stream/False': Thread(target=self.get_stream_action, args=('testCam01', False)),
+            '/testCam02/stream/False': Thread(target=self.get_stream_action, args=('testCam02', False))
         }
 
-        seconds = [60, 30, 1]
+        seconds = [30, 30, 30, 30, 1, 1]
 
         # start each thread and wait an increasing number of seconds
         for url, thread in threads.items():

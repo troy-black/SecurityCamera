@@ -10,7 +10,7 @@ class FastApiBaseTester(unittest.TestCase):
     def setUp(self):
         config.Config.load(**{
             'cameras': {
-                'testCam': {
+                'testCam01': {
                     'element': 'videotestsrc',
                     'properties': {
                         'pattern': 'ball'
@@ -19,16 +19,38 @@ class FastApiBaseTester(unittest.TestCase):
                     'width': 1280,
                     'height': 720,
                     'framerate': 5,
+                    'overlay': True,
+                    'autostart': True,
                     'nvvidconv': 'video/x-raw(memory:NVMM)',
                     'recorder': {
                         'record_framerate': 1,
                         'playback_framerate': 30,
                         'properties': {
-                            'location': 'test_%02d.mp4',
+                            'location': 'testCam01_%02d.mp4',
                             'max-files': 3,
                             'max-size-bytes': 5000000
-                        },
-                        'overlay': True
+                        }
+                    }
+                },
+                'testCam02': {
+                    'element': 'videotestsrc',
+                    'properties': {
+                        'pattern': 'colors'
+                    },
+                    'caps': 'video/x-raw',
+                    'width': 1280,
+                    'height': 720,
+                    'framerate': 5,
+                    'overlay': True,
+                    'nvvidconv': 'video/x-raw(memory:NVMM)',
+                    'recorder': {
+                        'record_framerate': 1,
+                        'playback_framerate': 30,
+                        'properties': {
+                            'location': 'testCam02_%02d.mp4',
+                            'max-files': 3,
+                            'max-size-bytes': 5000000
+                        }
                     }
                 }
             },
