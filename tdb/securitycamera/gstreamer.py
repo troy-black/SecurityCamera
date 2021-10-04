@@ -148,14 +148,6 @@ class GstreamerRecorder(Gstreamer):
 
         return src
 
-    def build_clockoverlay(self, source: Gst.Element, caps_string) -> Gst.Element:
-        clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
-        clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
-        self.pipeline.add(clockoverlay)
-        source.link(clockoverlay)
-
-        return self.build_nvvidconv(clockoverlay, caps_string)
-
     def build_file_sink(self, source: Gst.Element) -> Gst.Element:
         nvjpegdec: Gst.Element = Gst.ElementFactory.make('nvjpegdec')
         self.pipeline.add(nvjpegdec)
@@ -166,12 +158,7 @@ class GstreamerRecorder(Gstreamer):
         self.pipeline.add(capsfilter)
         nvjpegdec.link(capsfilter)
 
-        if self.source.recorder.overlay:
-            fn = self.build_clockoverlay
-        else:
-            fn = self.build_nvvidconv
-
-        nvvidconv = fn(capsfilter, 'video/x-raw(memory:NVMM),format=NV12')
+        nvvidconv = self.build_nvvidconv(capsfilter, 'video/x-raw(memory:NVMM),format=NV12')
 
         nvv4l2h264enc: Gst.Element = Gst.ElementFactory.make('nvv4l2h264enc')
         self.pipeline.add(nvv4l2h264enc)
@@ -233,8 +220,8 @@ class GstreamerCamera(Gstreamer):
     def _build_pipeline(self):
         last_element = self.build_camera_source()
 
-        # if self.overlay:
-        #     last_element = self.build_clockoverlay(source=last_element)
+        if self.source.overlay:
+            last_element = self.build_clockoverlay(source=last_element)
 
         self.build_jpeg_sink(source=last_element)
 
@@ -259,15 +246,15 @@ class GstreamerCamera(Gstreamer):
 
         return src_caps
 
-    # def build_clockoverlay(self, source: Gst.Element) -> Gst.Element:
-    #     nvvidconv = self.build_nvvidconv(source, 'video/x-raw')
-    #
-    #     clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
-    #     clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
-    #     self.pipeline.add(clockoverlay)
-    #     nvvidconv.link(clockoverlay)
-    #
-    #     return self.build_nvvidconv(clockoverlay, 'video/x-raw(memory:NVMM)')
+    def build_clockoverlay(self, source: Gst.Element) -> Gst.Element:
+        nvvidconv = self.build_nvvidconv(source, 'video/x-raw')
+
+        clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
+        clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
+        self.pipeline.add(clockoverlay)
+        nvvidconv.link(clockoverlay)
+
+        return self.build_nvvidconv(clockoverlay, 'video/x-raw(memory:NVMM)')
 
     def build_app_sink(self, source: Gst.Element, sink: Callable) -> Gst.Element:
         appsink: Gst.Element = Gst.ElementFactory.make('appsink')

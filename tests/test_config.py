@@ -6,7 +6,7 @@ class ConfigTester(FastApiBaseTester):
     def test_Config(self):
         config.Config.load(**{
             'cameras': {
-                'testCam': {
+                'testCam01': {
                     'element': 'videotestsrc',
                     'properties': {
                         'pattern': 'snow'
@@ -21,5 +21,5 @@ class ConfigTester(FastApiBaseTester):
             'log_level': 'CRITICAL'
         })
 
-        self.assertIn('testCam', config.Config.cameras)
+        self.assertIn('testCam01', config.Config.cameras)
         self.assertEqual(config.Config.log_level, 'CRITICAL')
