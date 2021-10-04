@@ -2,7 +2,8 @@ import json
 import os
 from typing import Dict
 
-from securitycamera.gstreamer import GstreamerCamera
+from tdb.securitycamera.gstreamer import GstreamerCamera
+from tdb.securitycamera.models import GstreamerSourceDetails
 
 
 class Config:
@@ -19,11 +20,12 @@ class Config:
                 result = json.load(json_file)
 
                 if isinstance(result, dict):
-                    details.update(result)
+                    result.update(details)
+                    details = result
 
         cls.cameras = {
-            identifier: GstreamerCamera(identifier, **camera_details)
-            for identifier, camera_details in details['cameras'].items()
+            name: GstreamerCamera(name, GstreamerSourceDetails(**camera_details))
+            for name, camera_details in details['cameras'].items()
         }
 
         cls.log_level = details.get('log_level', 'DEBUG')

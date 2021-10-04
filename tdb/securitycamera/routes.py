@@ -1,8 +1,10 @@
+import threading
+
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from starlette.responses import StreamingResponse
 
-from securitycamera import config
-from securitycamera.gstreamer import GstreamerCamera
+from tdb.securitycamera import config
+from tdb.securitycamera.gstreamer import GstreamerCamera
 
 router = APIRouter()
 
@@ -12,6 +14,11 @@ def get_camera(camera_id: str) -> GstreamerCamera:
         raise HTTPException(status_code=404, detail=f'Camera {camera_id} not found')
 
     return config.Config.cameras[camera_id]
+
+
+@router.get('/status')
+async def get_status():
+    return {'status': 'Running'}
 
 
 @router.get('/{camera_id}/stream/video')
@@ -33,6 +40,10 @@ async def get_stream_action(camera_id: str, action: bool, background_tasks: Back
 
     if action:
         background_tasks.add_task(camera.background_task)
+
+        if camera.recorder:
+            camera.recorder_thread = threading.Thread(target=camera.recorder.background_task)
+            camera.recorder_thread.start()
 
     return {
         'stream': action

@@ -1,4 +1,4 @@
-from securitycamera import config
+from tdb.securitycamera import config
 from test_app import FastApiBaseTester
 
 
@@ -7,10 +7,15 @@ class ConfigTester(FastApiBaseTester):
         config.Config.load(**{
             'cameras': {
                 'testCam': {
-                    'driver': 'MockDriver',
-                    'width': 640,
-                    'height': 480,
-                    'framerate': 1
+                    'element': 'videotestsrc',
+                    'properties': {
+                        'pattern': 'snow'
+                    },
+                    'caps': 'video/x-raw',
+                    'width': 1280,
+                    'height': 720,
+                    'framerate': 5,
+                    'nvvidconv': 'video/x-raw(memory:NVMM)'
                 }
             },
             'log_level': 'CRITICAL'

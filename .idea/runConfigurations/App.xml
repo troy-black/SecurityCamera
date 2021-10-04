@@ -7,12 +7,12 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="C:\Users\Troy\IdeaProjects\SecurityCamera\venv\Scripts\python.exe" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/securitycamera" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tdb/securitycamera" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/securitycamera/main.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tdb/securitycamera/main.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />

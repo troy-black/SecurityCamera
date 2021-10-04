@@ -1,7 +1,8 @@
 import logging
 
 from fastapi import FastAPI
-from securitycamera.routes import api, camera
+
+from tdb.securitycamera import routes
 
 logging.debug('Starting Application')
 
@@ -11,5 +12,6 @@ app = FastAPI()
 # app.secret_key = secret_key
 
 # load additional routes
-app.include_router(api.router, prefix='/api', tags=['api'])
-app.include_router(camera.router, prefix='/camera', tags=['camera'])
+app.include_router(routes.router,
+                   # prefix='/camera',
+                   tags=['camera'])

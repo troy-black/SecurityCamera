@@ -1,10 +1,13 @@
 import logging
 import threading
 from abc import ABC, abstractmethod
+from threading import Thread
 from time import time
 from typing import Optional, Callable
 
 import gi  # noqa:F401,F402
+
+from securitycamera.models import GstreamerSourceDetails
 
 gi.require_version('GObject', '2.0')
 gi.require_version('Gst', '1.0')
@@ -13,27 +16,28 @@ from gi.repository import GObject, Gst, GstApp, GLib  # noqa:F401,F402
 
 
 class Gstreamer(ABC):
+    name: str
     debug: bool
     running: bool
 
-    width: int
-    height: int
+    source: GstreamerSourceDetails
 
-    _id: str
-
-    def __init__(self, identifier: str, *, debug: bool = False, **kwargs):
-        self._id = identifier
+    def __init__(self, name: str, source_details: GstreamerSourceDetails, *, debug: bool = False):  # , **kwargs):
+        self.name = name
         self.running = False
 
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        self.recorder_thread: Optional[Thread] = None
+
+        self.source = source_details
+
+        self._setup()
 
         if debug:
             Gst.debug_set_active(True)
             Gst.debug_set_colored(True)
             Gst.debug_set_default_threshold(Gst.DebugLevel.DEBUG)
 
-        GObject.threads_init()
+        # GObject.threads_init()
         Gst.init(None)
 
         # threading vars
@@ -47,7 +51,7 @@ class Gstreamer(ABC):
         self._build_pipeline()
 
         # noinspection PyUnresolvedReferences
-        self.loop = GObject.MainLoop()
+        self.loop = GLib.MainLoop()
 
         # Setup Bus Message function
         bus = self.pipeline.get_bus()
@@ -62,24 +66,24 @@ class Gstreamer(ABC):
 
             self.pipeline.set_state(Gst.State.PLAYING)
 
-            logging.debug(f'[{self._id}] Entering Gstreamer loop')
+            logging.debug(f'[{self.name}] Entering Gstreamer loop')
 
             # start gstreamer pipeline thread (blocking)
             self.loop.run()
 
-            logging.debug(f'[{self._id}] Gstreamer Pipeline has ended')
+            logging.debug(f'[{self.name}] Gstreamer Pipeline has ended')
 
             self.pipeline.set_state(Gst.State.NULL)
 
             self._threading_lock.release()
 
-    def build_nvvidconv(self, source: Gst.Element, caps: str) -> Gst.Element:
+    def build_nvvidconv(self, source: Gst.Element, caps_string: str) -> Gst.Element:
         nvvidconv: Gst.Element = Gst.ElementFactory.make('nvvidconv')
         self.pipeline.add(nvvidconv)
         source.link(nvvidconv)
 
         capsfilter: Gst.Element = Gst.ElementFactory.make('capsfilter')
-        capsfilter.set_property('caps', Gst.Caps.from_string(caps))
+        capsfilter.set_property('caps', Gst.Caps.from_string(caps_string))
         self.pipeline.add(capsfilter)
         nvvidconv.link(capsfilter)
 
@@ -89,17 +93,20 @@ class Gstreamer(ABC):
     def _build_pipeline(self):
         pass
 
+    @abstractmethod
+    def _setup(self):
+        pass
+
     def pipeline_bus_messages(self, bus, message, loop) -> bool:
-        t = message.type
-        logging.debug(f'[{self._id}] {t}')
+        logging.debug(f'[{self.name}] {message.type}')
 
-        if t == Gst.MessageType.ERROR:
+        if message.type == Gst.MessageType.ERROR:
             err, dbg = message.parse_error()
-            logging.debug(f'[{self._id}] ERROR: {message.src.get_name()}: {err.message}')
-            logging.debug(f'[{self._id}] {dbg}')
-            logging.debug(f'[{self._id}] Loop Quit')
+            logging.debug(f'[{self.name}] ERROR: {message.src.get_name()}: {err.message}')
+            logging.debug(f'[{self.name}] {dbg}')
+            logging.debug(f'[{self.name}] Loop Quit')
 
-        if t in (Gst.MessageType.ERROR, Gst.MessageType.EOS):
+        if message.type in (Gst.MessageType.ERROR, Gst.MessageType.EOS):
             self.running = False
             loop.quit()
 
@@ -107,34 +114,32 @@ class Gstreamer(ABC):
 
 
 class GstreamerRecorder(Gstreamer):
-    location: str
-    max_files: int
-    max_size_bytes: int
-    playback_framerate: int
-    record_framerate: int
-
     _src: Gst.Element
     _pts: int
     _dts: int
     _duration: float
 
-    def _build_pipeline(self):
+    def _setup(self):
         self._pts = 0
         self._dts = GLib.MAXUINT64
-        self._duration = 10 ** 9 / (self.playback_framerate / 1)
+        self._duration = 10 ** 9 / (self.source.recorder.playback_framerate / 1)
 
-        last_element = self.build_raw_app_source()
+    def _build_pipeline(self):
+        last_element = self.build_app_source()
 
         self.build_file_sink(source=last_element)
 
-    def build_raw_app_source(self) -> Gst.Element:
+    def build_app_source(self) -> Gst.Element:
         src: Gst.Element = Gst.ElementFactory.make('appsrc', 'src')
         src.set_property('format', Gst.Format.TIME)
         src.set_property('block', True)
         src.set_property(
             'caps',
             Gst.Caps.from_string(
-                f'image/jpeg,width={self.width},height={self.height},framerate={self.playback_framerate}/1'
+                f'image/jpeg,'
+                f'width={self.source.width},'
+                f'height={self.source.height},'
+                f'framerate={self.source.recorder.playback_framerate}/1'
             )
         )
         self.pipeline.add(src)
@@ -142,6 +147,14 @@ class GstreamerRecorder(Gstreamer):
         self._src = src
 
         return src
+
+    def build_clockoverlay(self, source: Gst.Element, caps_string) -> Gst.Element:
+        clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
+        clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
+        self.pipeline.add(clockoverlay)
+        source.link(clockoverlay)
+
+        return self.build_nvvidconv(clockoverlay, caps_string)
 
     def build_file_sink(self, source: Gst.Element) -> Gst.Element:
         nvjpegdec: Gst.Element = Gst.ElementFactory.make('nvjpegdec')
@@ -153,7 +166,12 @@ class GstreamerRecorder(Gstreamer):
         self.pipeline.add(capsfilter)
         nvjpegdec.link(capsfilter)
 
-        nvvidconv = self.build_nvvidconv(capsfilter, 'video/x-raw(memory:NVMM),format=NV12')
+        if self.source.recorder.overlay:
+            fn = self.build_clockoverlay
+        else:
+            fn = self.build_nvvidconv
+
+        nvvidconv = fn(capsfilter, 'video/x-raw(memory:NVMM),format=NV12')
 
         nvv4l2h264enc: Gst.Element = Gst.ElementFactory.make('nvv4l2h264enc')
         self.pipeline.add(nvv4l2h264enc)
@@ -164,16 +182,15 @@ class GstreamerRecorder(Gstreamer):
         nvv4l2h264enc.link(h264parse)
 
         splitmuxsink: Gst.Element = Gst.ElementFactory.make('splitmuxsink')
-        splitmuxsink.set_property('location', self.location)
-        splitmuxsink.set_property('max-size-bytes', self.max_size_bytes)
-        splitmuxsink.set_property('max-files', self.max_files)
+        for prop, val in self.source.recorder.properties.items():
+            splitmuxsink.set_property(prop, val)
         self.pipeline.add(splitmuxsink)
         h264parse.link(splitmuxsink)
 
         return splitmuxsink
 
     def push(self, _bytes: bytes):
-        logging.debug(f'[{self._id}] Pushing Bytes')
+        logging.debug(f'[{self.name}] Pushing Bytes')
 
         self._pts += self._duration
         offset = int(self._pts / self._duration)
@@ -185,17 +202,13 @@ class GstreamerRecorder(Gstreamer):
         gst_buffer.offset = offset
         gst_buffer.duration = self._duration
 
-        logging.debug(f'[{self._id}] Pushing Buffer')
+        logging.debug(f'[{self.name}] Pushing Buffer')
 
         self._src.emit("push-buffer", gst_buffer)
 
 
 class GstreamerCamera(Gstreamer):
-    sensor_id: int
-    overlay: int
-    save: dict
-
-    framerate: int
+    recorder: Optional[GstreamerRecorder]
 
     _calculated_fps: float
     _fps_timestamp: float
@@ -204,58 +217,57 @@ class GstreamerCamera(Gstreamer):
     _record_fps: float
     _record_timestamp: float
 
-    _recorder: GstreamerRecorder
+    def _setup(self):
+        self._calculated_fps = 0.0
+        self._fps_timestamp = time()
+        self._last_image_bytes = None
+        self.recorder = None
+
+        if self.source.recorder:
+            self._record_fps = 1 / self.source.recorder.record_framerate
+            self._record_timestamp = time()
+
+            self.recorder = GstreamerRecorder(f'{self.name}_recorder', self.source)
+            # self.recorder_thread = threading.Thread(target=self.recorder.background_task)
 
     def _build_pipeline(self):
-        self._last_image_bytes = None
-        self._fps_timestamp = time()
-        self._calculated_fps = 0.0
-        self._record_fps = 1 / self.save.get('record_framerate', 1)
-        self._record_timestamp = time()
-
-        tee: Gst.Element = None
-
         last_element = self.build_camera_source()
 
-        if self.overlay:
-            last_element = self.build_clockoverlay(source=last_element)
+        # if self.overlay:
+        #     last_element = self.build_clockoverlay(source=last_element)
 
-        self.build_jpeg_sink(source=tee or last_element)
-
-        self._recorder = GstreamerRecorder(f'{self._id}_record', width=self.width, height=self.height, **self.save)
-        self._recorder_thread = threading.Thread(target=self._recorder.background_task)
-        self._recorder_thread.start()
+        self.build_jpeg_sink(source=last_element)
 
     def build_camera_source(self) -> Gst.Element:
-        src: Gst.Element = Gst.ElementFactory.make('nvarguscamerasrc', 'src')
-        src.set_property('sensor-id', self.sensor_id)
+        src: Gst.Element = Gst.ElementFactory.make(self.source.element, 'src')
+        for prop, val in self.source.properties.items():
+            src.set_property(prop, val)
         self.pipeline.add(src)
 
         src_caps: Gst.Element = Gst.ElementFactory.make('capsfilter')
-        src_caps.set_property(
-            'caps',
-            Gst.Caps.from_string(
-                f'video/x-raw(memory:NVMM),'
-                f'format=NV12,'
-                f'width={self.width},'
-                f'height={self.height},'
-                f'framerate={self.framerate}/1'
-            )
-        )
+        src_caps.set_property('caps', Gst.Caps.from_string(
+            f'{self.source.caps},'
+            f'width={self.source.width},'
+            f'height={self.source.height},'
+            f'framerate={self.source.framerate}/1'
+        ))
         self.pipeline.add(src_caps)
         src.link(src_caps)
 
+        if self.source.nvvidconv:
+            return self.build_nvvidconv(src_caps, self.source.nvvidconv)
+
         return src_caps
 
-    def build_clockoverlay(self, source: Gst.Element) -> Gst.Element:
-        nvvidconv = self.build_nvvidconv(source, 'video/x-raw')
-
-        clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
-        clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
-        self.pipeline.add(clockoverlay)
-        nvvidconv.link(clockoverlay)
-
-        return self.build_nvvidconv(clockoverlay, 'video/x-raw(memory:NVMM)')
+    # def build_clockoverlay(self, source: Gst.Element) -> Gst.Element:
+    #     nvvidconv = self.build_nvvidconv(source, 'video/x-raw')
+    #
+    #     clockoverlay: Gst.Element = Gst.ElementFactory.make('clockoverlay')
+    #     clockoverlay.set_property('time-format', '"%D %H:%M:%S"')
+    #     self.pipeline.add(clockoverlay)
+    #     nvvidconv.link(clockoverlay)
+    #
+    #     return self.build_nvvidconv(clockoverlay, 'video/x-raw(memory:NVMM)')
 
     def build_app_sink(self, source: Gst.Element, sink: Callable) -> Gst.Element:
         appsink: Gst.Element = Gst.ElementFactory.make('appsink')
@@ -299,7 +311,7 @@ class GstreamerCamera(Gstreamer):
         # set threading event
         self._threading_event.set()
 
-        logging.debug(f'[{self._id}] Pulling jpeg')
+        logging.debug(f'[{self.name}] Pulling jpeg')
 
         sample: Gst.Sample = sink.emit('pull-sample')
         buffer: Gst.Buffer = sample.get_buffer()
@@ -308,7 +320,7 @@ class GstreamerCamera(Gstreamer):
         # pass frames @ record_framerate to recorder
         if self._record_timestamp + self._record_fps <= time():
             self._record_timestamp = time()
-            self._recorder.push(self._last_image_bytes)
+            self.recorder.push(self._last_image_bytes)
 
         # clear threading event
         self._threading_event.clear()
@@ -316,8 +328,14 @@ class GstreamerCamera(Gstreamer):
         self.calculate_fps()
 
         if not self.running:
-            logging.debug(f'[{self._id}] Closing Pipeline')
-            self.pipeline.set_state(Gst.State.NULL)
+            logging.debug(f'[{self.name}] Closing Pipeline')
+            if self.recorder:
+                self.recorder.running = False
+                # self._recorder.pipeline.set_state(Gst.State.NULL)
+                self.recorder.pipeline.send_event(Gst.Event.new_eos())
+
+            # self.pipeline.set_state(Gst.State.NULL)
+            self.pipeline.send_event(Gst.Event.new_eos())
 
         return Gst.FlowReturn.OK
 
@@ -344,7 +362,7 @@ class GstreamerCamera(Gstreamer):
         self._fps_timestamp = time()
         self._calculated_fps = fps
 
-        logging.debug(f'[{self._id}] Average FPS: {fps}')
+        logging.debug(f'[{self.name}] Average FPS: {fps}')
 
         return fps
 
@@ -356,3 +374,5 @@ class GstreamerCamera(Gstreamer):
 
             # block this thread until threading event is cleared
             self._threading_event.wait(1)
+
+        logging.debug(f'[{self.name}] Exiting Stream')
