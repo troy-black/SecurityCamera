@@ -30,6 +30,7 @@
       "width": 4056,
       "height": 2288,
       "framerate": 30,
+      "autostart": true,
       "recorder": {
         "record_framerate": 1,
         "playback_framerate": 30,
@@ -44,12 +45,13 @@
     "cam1": {
       "element": "nvarguscamerasrc",
       "properties": {
-        "sensor-id": 0
+        "sensor-id": 1
       },
       "caps": "video/x-raw(memory:NVMM)",
       "width": 4056,
       "height": 2288,
       "framerate": 30,
+      "autostart": true,
       "recorder": {
         "record_framerate": 1,
         "playback_framerate": 30,

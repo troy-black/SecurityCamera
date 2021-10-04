@@ -26,7 +26,7 @@ class Gstreamer(ABC):
         self.name = name
         self.running = False
 
-        self.recorder_thread: Optional[Thread] = None
+        self.thread: Optional[Thread] = None
 
         self.source = source_details
 

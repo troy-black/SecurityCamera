@@ -20,3 +20,4 @@ class GstreamerSourceDetails(BaseModel):
     framerate: int
     nvvidconv: Optional[str]
     recorder: Optional[GstreamerRecorderDetails]
+    autostart: bool = False
