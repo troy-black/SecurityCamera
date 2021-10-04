@@ -1,15 +1,16 @@
 from uvicorn import Config as UvicornConfig
 from uvicorn import Server
 
-from securitycamera import config
-from securitycamera import logger
+from tdb.securitycamera import config
+from tdb.securitycamera import logger
 
 
 def main():
     # TODO - pass cmd args here...
+    config.Config.load()
 
     uvicorn_config = UvicornConfig(
-        'src.securitycamera.app:app',
+        'tdb.securitycamera.app:app',
         host='0.0.0.0',
         log_level=config.Config.log_level.lower(),
     )

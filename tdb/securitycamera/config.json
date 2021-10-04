@@ -1,0 +1,66 @@
+{
+  "cameras": {
+    "testCam": {
+      "element": "videotestsrc",
+      "properties": {
+        "pattern": "gamut"
+      },
+      "caps": "video/x-raw",
+      "width": 1280,
+      "height": 720,
+      "framerate": 5,
+      "nvvidconv": "video/x-raw(memory:NVMM)",
+      "recorder": {
+        "record_framerate": 1,
+        "playback_framerate": 30,
+        "properties": {
+          "location": "test_%02d.mp4",
+          "max-files": 3,
+          "max-size-bytes": 5000000
+        },
+        "overlay": true
+      }
+    },
+    "cam0": {
+      "element": "nvarguscamerasrc",
+      "properties": {
+        "sensor-id": 0
+      },
+      "caps": "video/x-raw(memory:NVMM)",
+      "width": 4056,
+      "height": 2288,
+      "framerate": 30,
+      "recorder": {
+        "record_framerate": 1,
+        "playback_framerate": 30,
+        "properties": {
+          "location": "cam0_%02d.mp4",
+          "max-files": 10,
+          "max-size-bytes": 500000000
+        },
+        "overlay": true
+      }
+    },
+    "cam1": {
+      "element": "nvarguscamerasrc",
+      "properties": {
+        "sensor-id": 0
+      },
+      "caps": "video/x-raw(memory:NVMM)",
+      "width": 4056,
+      "height": 2288,
+      "framerate": 30,
+      "recorder": {
+        "record_framerate": 1,
+        "playback_framerate": 30,
+        "properties": {
+          "location": "cam1_%02d.mp4",
+          "max-files": 10,
+          "max-size-bytes": 500000000
+        },
+        "overlay": true
+      }
+    }
+  },
+  "log_level": "DEBUG"
+}
