@@ -1,9 +1,6 @@
 import unittest
 
-from fastapi.testclient import TestClient
-
 from tdb.securitycamera import config, logger
-from tdb.securitycamera.app import app
 
 
 class FastApiBaseTester(unittest.TestCase):
@@ -58,5 +55,3 @@ class FastApiBaseTester(unittest.TestCase):
         })
 
         logger.setup_logging(config.Config.log_level, False)
-
-        self.client = TestClient(app)
