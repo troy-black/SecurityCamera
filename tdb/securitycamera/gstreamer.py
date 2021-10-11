@@ -7,7 +7,7 @@ from typing import Optional, Callable
 
 import gi  # noqa:F401,F402
 
-from securitycamera.models import GstreamerSourceDetails
+from tdb.securitycamera.models import GstreamerSourceDetails
 
 gi.require_version('GObject', '2.0')
 gi.require_version('Gst', '1.0')

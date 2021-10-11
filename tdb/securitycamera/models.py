@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, Union
 
 from pydantic import BaseModel
 
@@ -20,3 +20,27 @@ class GstreamerSourceDetails(BaseModel):
     recorder: Optional[GstreamerRecorderDetails]
     overlay: bool = False
     autostart: bool = False
+
+
+class UserDetails(BaseModel):
+    username: str
+
+
+class UserPassword(UserDetails):
+    password: str
+
+
+class UserHashed(UserDetails):
+    hashed_password: str
+
+
+class ConfigDetails(BaseModel):
+    cameras: Dict[str, GstreamerSourceDetails]
+    log_level: str
+    secret_key: str
+    users: Dict[str, Union[UserDetails, UserHashed]]
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

@@ -64,5 +64,12 @@
       }
     }
   },
-  "log_level": "DEBUG"
+  "log_level": "DEBUG",
+  "secret_key": "thisismeantasanexamplefordevelopmentpurposesonlypleaseupdatethis",
+  "users": {
+    "admin": {
+      "username": "admin",
+      "hashed_password": "$2b$12$0808RGj0w02ApEj6Z/aTWOBxTVH0mIJmvJYpP6PRPOrRNa2lmrrRa"
+    }
+  }
 }

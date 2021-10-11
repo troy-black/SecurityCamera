@@ -3,12 +3,14 @@ import os
 from typing import Dict
 
 from tdb.securitycamera.gstreamer import GstreamerCamera
-from tdb.securitycamera.models import GstreamerSourceDetails
+from tdb.securitycamera.models import GstreamerSourceDetails, UserHashed
 
 
 class Config:
     cameras: Dict[str, GstreamerCamera] = {}
     log_level: str = 'DEBUG'
+    users: Dict[str, UserHashed] = {}
+    secret_key: str
 
     @classmethod
     def load(cls, **kwargs):
@@ -27,5 +29,12 @@ class Config:
             name: GstreamerCamera(name, GstreamerSourceDetails(**camera_details))
             for name, camera_details in details['cameras'].items()
         }
+
+        cls.users = {
+            name: UserHashed(**data)
+            for name, data in details['users'].items()
+        }
+
+        cls.secret_key = details['secret_key']
 
         cls.log_level = details.get('log_level', 'DEBUG')

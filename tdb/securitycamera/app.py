@@ -1,7 +1,9 @@
 import logging
 import threading
+from pathlib import Path
 
 from fastapi import FastAPI
+from starlette.staticfiles import StaticFiles
 
 from tdb.securitycamera import routes, config
 
@@ -9,11 +11,11 @@ logging.debug('Starting Application')
 
 app = FastAPI()
 
-# TODO - security
-# app.secret_key = secret_key
+app.secret_key = config.Config.secret_key
 
 # load additional routes
-app.include_router(routes.router, tags=['camera'])
+app.include_router(routes.router)
+app.mount("/static", StaticFiles(directory=str(Path(str(Path(__file__).parent), 'static'))), name="static")
 
 
 @app.on_event('startup')

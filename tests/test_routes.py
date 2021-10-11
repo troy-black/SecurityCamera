@@ -5,13 +5,12 @@ from typing import Dict
 
 from starlette.testclient import TestClient
 
-from securitycamera.app import app
 from test_app import FastApiBaseTester
 
 
 class FastApiCameraTester(FastApiBaseTester):
     def test_FullCameraCycle(self):
-        with TestClient(app) as client:
+        with TestClient(self.app) as client:
             def get_stream(_url: str):
                 response = client.get(_url)
 
@@ -40,7 +39,7 @@ class FastApiCameraTester(FastApiBaseTester):
             logging.debug(f'Threading Complete')
 
     def test_Status(self):
-        client = TestClient(app)
+        client = TestClient(self.app)
 
         response = client.get('/status')
 
