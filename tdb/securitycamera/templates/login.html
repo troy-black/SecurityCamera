@@ -28,10 +28,9 @@
         const loginForm = document.getElementById("loginForm")
         const data = new FormData(loginForm)
         let xmlHttpRequest = new XMLHttpRequest();
-        xmlHttpRequest.open("POST", "/auth", true);
+        xmlHttpRequest.open("POST", "/auth/login", true);
 
         xmlHttpRequest.onload = (ev) => {
-            debugger;
             const status = document.getElementById("loginStatus")
             const responseData = JSON.parse(xmlHttpRequest.responseText)
             if (xmlHttpRequest.status === 200) {

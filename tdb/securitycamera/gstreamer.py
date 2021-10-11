@@ -191,7 +191,7 @@ class GstreamerRecorder(Gstreamer):
 
         logging.debug(f'[{self.name}] Pushing Buffer')
 
-        self._src.emit("push-buffer", gst_buffer)
+        self._src.emit('push-buffer', gst_buffer)
 
 
 class GstreamerCamera(Gstreamer):

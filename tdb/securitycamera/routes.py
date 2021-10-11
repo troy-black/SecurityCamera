@@ -53,12 +53,12 @@ async def get_stream_action(camera_id: str, action: bool, background_tasks: Back
 
 
 @router.get('/auth/login', response_class=HTMLResponse, tags=['Auth'])
-async def read_item(request: Request):
+async def get_auth_login(request: Request):
     return templates.TemplateResponse('login.html', {'request': request})
 
 
 @router.post('/auth/login', tags=['Auth'])
-async def login_for_access_token(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
+async def post_auth_login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     user = security.authenticate_user(form_data.username, form_data.password)
 
     if not user:
@@ -75,5 +75,5 @@ async def login_for_access_token(response: Response, form_data: OAuth2PasswordRe
 
 
 @router.get('/users/me/', response_model=UserDetails, tags=['Testing'])
-async def read_users_me(current_user: UserDetails = Depends(security.get_current_active_user)):
+async def delete_this_test(current_user: UserDetails = Depends(security.get_current_active_user)):
     return current_user

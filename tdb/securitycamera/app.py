@@ -15,7 +15,7 @@ app.secret_key = config.Config.secret_key
 
 # load additional routes
 app.include_router(routes.router)
-app.mount("/static", StaticFiles(directory=str(Path(str(Path(__file__).parent), 'static'))), name="static")
+app.mount('/static', StaticFiles(directory=str(Path(str(Path(__file__).parent), 'static'))), name='static')
 
 
 @app.on_event('startup')
