@@ -21,12 +21,13 @@ class ConfigTester(FastApiBaseTester):
             },
             'log_level': 'CRITICAL',
             'secret_key': 'unittest',
-            'users': {
-                'admin': {
+            'users': [
+                {
                     'username': 'fakeUsername',
-                    'hashed_password': 'fakePassword'
+                    'hashed_password': 'fakePassword',
+                    'access': ['Camera']
                 }
-            }
+            ]
         })
 
         self.assertIn('testCam01', config.Config.cameras)

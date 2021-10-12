@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link crossorigin="anonymous" href="../static/css/bootstrap.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Login</title>
+</head>
+<body>
+
+{% for name, details in camera_details.items() %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            Camera Name: {{ name }}
+        </div>
+        <div class="col">
+            Element: {{ details.element }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            caps: {{ details.caps }}
+        </div>
+        {% for key, val in details.properties.items() %}
+        <div class="col">
+            {{ key }}: {{ val }}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="row">
+        <div class="col">
+            Size: {{ details.width }} X {{ details.height }}
+        </div>
+        <div class="col">
+            Framerate: {{ details.framerate }}
+        </div>
+    </div>
+    {% if details.recorder %}
+    <div class="row">
+        <div class="col">
+            Playback Framerate: {{ details.recorder.playback_framerate }}
+        </div>
+        <div class="col">
+            Record Framerate: {{ details.recorder.record_framerate }}
+        </div>
+    </div>
+    <div class="row">
+        {% for key, val in details.recorder.properties.items() %}
+        <div class="col">
+            {{ key }}: {{ val }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="row">
+        <a href="/camera/{{ name }}/video">
+            <img alt="{{ name }}" class="img-fluid" src="/camera/{{ name }}/jpeg">
+        </a>
+    </div>
+    <div class="row">
+    </div>
+</div>
+{% endfor %}
+
+</body>
+<script>
+</script>
+</html>

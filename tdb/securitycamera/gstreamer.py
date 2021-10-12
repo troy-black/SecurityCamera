@@ -26,6 +26,8 @@ class Gstreamer(ABC):
         self.name = name
         self.running = False
 
+        self.pipeline: Gst.Pipeline = None
+
         self.thread: Optional[Thread] = None
 
         self.source = source_details
@@ -45,31 +47,27 @@ class Gstreamer(ABC):
         self._threading_event = threading.Event()
         self._threading_event.clear()
 
-        # Create Pipeline
-        self.pipeline = Gst.Pipeline.new('pipeline')
-
-        self._build_pipeline()
-
-        # noinspection PyUnresolvedReferences
-        self.loop = GLib.MainLoop()
-
-        # Setup Bus Message function
-        bus = self.pipeline.get_bus()
-        bus.add_signal_watch()
-        bus.connect('message', self.pipeline_bus_messages, self.loop)
-
     def background_task(self):
         lock = self._threading_lock.acquire(False)
 
         if lock:
             self.running = True
 
+            self.create_pipeline()
+
             self.pipeline.set_state(Gst.State.PLAYING)
 
             logging.debug(f'[{self.name}] Entering Gstreamer loop')
 
-            # start gstreamer pipeline thread (blocking)
-            self.loop.run()
+            bus = self.pipeline.get_bus()
+
+            # Thread blocking
+            message = bus.timed_pop_filtered(
+                Gst.CLOCK_TIME_NONE,
+                Gst.MessageType.ERROR | Gst.MessageType.EOS
+            )
+
+            self.handle_message(message)
 
             logging.debug(f'[{self.name}] Gstreamer Pipeline has ended')
 
@@ -89,6 +87,26 @@ class Gstreamer(ABC):
 
         return capsfilter
 
+    def create_pipeline(self):
+        self.pipeline = Gst.Pipeline.new('pipeline')
+        self._build_pipeline()
+
+    def handle_message(self, msg):
+        t = msg.type
+        if t == Gst.MessageType.ERROR:
+            err, dbg = msg.parse_error()
+
+            logging.debug(f'[{self.name}] ERROR: {msg.src.get_name()}: {err.message}')
+
+            if dbg:
+                logging.debug(f'[{self.name}] DMG: {dbg}')
+
+        elif t == Gst.MessageType.EOS:
+            logging.debug(f'[{self.name}] EOS: End-Of-Stream reached')
+
+        else:
+            logging.debug(f'[{self.name}] Unexpected msg.type: {t}')
+
     @abstractmethod
     def _build_pipeline(self):
         pass
@@ -96,21 +114,6 @@ class Gstreamer(ABC):
     @abstractmethod
     def _setup(self):
         pass
-
-    def pipeline_bus_messages(self, bus, message, loop) -> bool:
-        logging.debug(f'[{self.name}] {message.type}')
-
-        if message.type == Gst.MessageType.ERROR:
-            err, dbg = message.parse_error()
-            logging.debug(f'[{self.name}] ERROR: {message.src.get_name()}: {err.message}')
-            logging.debug(f'[{self.name}] {dbg}')
-            logging.debug(f'[{self.name}] Loop Quit')
-
-        if message.type in (Gst.MessageType.ERROR, Gst.MessageType.EOS):
-            self.running = False
-            loop.quit()
-
-        return True
 
 
 class GstreamerRecorder(Gstreamer):
@@ -199,7 +202,7 @@ class GstreamerCamera(Gstreamer):
 
     _calculated_fps: float
     _fps_timestamp: float
-    _last_image_bytes: Optional[bytes]
+    last_image_bytes: Optional[bytes]
 
     _record_fps: float
     _record_timestamp: float
@@ -207,7 +210,7 @@ class GstreamerCamera(Gstreamer):
     def _setup(self):
         self._calculated_fps = 0.0
         self._fps_timestamp = time()
-        self._last_image_bytes = None
+        self.last_image_bytes = None
         self.recorder = None
 
         if self.source.recorder:
@@ -215,7 +218,6 @@ class GstreamerCamera(Gstreamer):
             self._record_timestamp = time()
 
             self.recorder = GstreamerRecorder(f'{self.name}_recorder', self.source)
-            # self.recorder_thread = threading.Thread(target=self.recorder.background_task)
 
     def _build_pipeline(self):
         last_element = self.build_camera_source()
@@ -302,12 +304,12 @@ class GstreamerCamera(Gstreamer):
 
         sample: Gst.Sample = sink.emit('pull-sample')
         buffer: Gst.Buffer = sample.get_buffer()
-        self._last_image_bytes = buffer.extract_dup(0, buffer.get_size())
+        self.last_image_bytes = buffer.extract_dup(0, buffer.get_size())
 
         # pass frames @ record_framerate to recorder
         if self._record_timestamp + self._record_fps <= time():
             self._record_timestamp = time()
-            self.recorder.push(self._last_image_bytes)
+            self.recorder.push(self.last_image_bytes)
 
         # clear threading event
         self._threading_event.clear()
@@ -316,12 +318,11 @@ class GstreamerCamera(Gstreamer):
 
         if not self.running:
             logging.debug(f'[{self.name}] Closing Pipeline')
+
             if self.recorder:
                 self.recorder.running = False
-                # self._recorder.pipeline.set_state(Gst.State.NULL)
                 self.recorder.pipeline.send_event(Gst.Event.new_eos())
 
-            # self.pipeline.set_state(Gst.State.NULL)
             self.pipeline.send_event(Gst.Event.new_eos())
 
         return Gst.FlowReturn.OK
@@ -355,9 +356,9 @@ class GstreamerCamera(Gstreamer):
 
     def stream_images(self):
         while self.running:
-            if self._last_image_bytes:
+            if self.last_image_bytes:
                 # format as html mjpeg stream
-                yield b'--frame\r\nContent-Type:image/jpeg\r\n\r\n' + self._last_image_bytes + b'\r\n'
+                yield b'--frame\r\nContent-Type:image/jpeg\r\n\r\n' + self.last_image_bytes + b'\r\n'
 
             # block this thread until threading event is cleared
             self._threading_event.wait(1)

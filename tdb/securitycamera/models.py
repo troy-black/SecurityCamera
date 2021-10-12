@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, List
 
 from pydantic import BaseModel
 
@@ -19,11 +19,11 @@ class GstreamerSourceDetails(BaseModel):
     nvvidconv: Optional[str]
     recorder: Optional[GstreamerRecorderDetails]
     overlay: bool = False
-    autostart: bool = False
 
 
 class UserDetails(BaseModel):
     username: str
+    access: List[str]
 
 
 class UserPassword(UserDetails):
@@ -38,7 +38,7 @@ class ConfigDetails(BaseModel):
     cameras: Dict[str, GstreamerSourceDetails]
     log_level: str
     secret_key: str
-    users: Dict[str, Union[UserDetails, UserHashed]]
+    users: List[Union[UserDetails, UserHashed]]
 
 
 class Token(BaseModel):

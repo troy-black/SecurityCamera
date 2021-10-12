@@ -1,42 +1,56 @@
 import logging
 from threading import Thread
 from time import sleep
-from typing import Dict
 
 from starlette.testclient import TestClient
 
+from tdb.securitycamera import config
+from tdb.securitycamera.gstreamer import GstreamerCamera
 from test_app import FastApiBaseTester
 
 
 class FastApiCameraTester(FastApiBaseTester):
-    def test_FullCameraCycle(self):
+    def test_Cameras(self):
         with TestClient(self.app) as client:
-            def get_stream(_url: str):
-                response = client.get(_url)
+            def login():
+                auth = client.post('/auth/login', data={
+                    'username': 'unittest',
+                    'password': 'unittest'
+                })
 
+                self.assertEqual(auth.status_code, 200)
+
+                return auth.cookies
+
+            def stop_camera_thread(cam: GstreamerCamera, seconds: int):
+                logging.debug(f'Waiting for Camera Thread')
+                sleep(seconds)
+                logging.debug(f'Stopping Camera Thread')
+                cam.running = False
+
+            for name, camera in config.Config.cameras.items():
+                cookies = login()
+
+                response = client.get(f'/camera/dashboard', cookies=cookies)
                 self.assertEqual(response.status_code, 200)
 
-            threads: Dict[str, Thread] = {}
-            for action in (True, 'video', False):
-                for camera_id in ('testCam01', 'testCam02'):
-                    url = f'/{camera_id}/stream/{action}'
-                    thread = Thread(target=get_stream, args=(url,))
-                    threads[url] = thread
+                response = client.get(f'/camera/{name}/jpeg', cookies=cookies)
+                self.assertEqual(response.status_code, 200)
 
-            seconds = [30, 30, 30, 30, 1, 1]
-
-            # start each thread and wait an increasing number of seconds
-            for url, thread in threads.items():
-                logging.debug(f'Starting Thread URL:{url}')
+                thread = Thread(target=stop_camera_thread, args=(camera, 10))
                 thread.start()
-                sleep(seconds.pop(0))
 
-            # join each thread and wait until everything completes
-            for url in reversed(list(threads.keys())):
-                logging.debug(f'Joining Thread URL:{url}')
-                threads[url].join()
+                response = client.get(f'/camera/{name}/video', cookies=cookies)
+                self.assertEqual(response.status_code, 200)
 
-            logging.debug(f'Threading Complete')
+                thread.join()
+
+    def test_Login(self):
+        client = TestClient(self.app)
+
+        response = client.get('/auth/login')
+
+        self.assertEqual(response.status_code, 200)
 
     def test_Status(self):
         client = TestClient(self.app)

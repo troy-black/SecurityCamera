@@ -23,6 +23,12 @@ HTTP_BAD_USER_PASS = HTTPException(
     headers={'WWW-Authenticate': 'Bearer'},
 )
 
+HTTP_FORBIDDEN = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN,
+    detail='Access forbidden',
+    headers={'WWW-Authenticate': 'Bearer'},
+)
+
 
 def get_camera(camera_id: str) -> GstreamerCamera:
     if camera_id not in config.Config.cameras:

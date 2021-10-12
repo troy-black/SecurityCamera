@@ -34,7 +34,7 @@
             const status = document.getElementById("loginStatus")
             const responseData = JSON.parse(xmlHttpRequest.responseText)
             if (xmlHttpRequest.status === 200) {
-                window.location.href = "/users/me/";
+                window.location.href = "/camera/dashboard";
             } else {
                 status.innerText = "Error logging in: " + responseData.detail
             }

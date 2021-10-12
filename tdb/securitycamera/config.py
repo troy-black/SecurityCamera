@@ -8,7 +8,8 @@ from tdb.securitycamera.models import GstreamerSourceDetails, UserHashed
 
 class Config:
     cameras: Dict[str, GstreamerCamera] = {}
-    log_level: str = 'DEBUG'
+    camera_details: Dict[str, GstreamerSourceDetails] = {}
+    log_level: str = 'ERROR'
     users: Dict[str, UserHashed] = {}
     secret_key: str
 
@@ -25,14 +26,19 @@ class Config:
                     result.update(details)
                     details = result
 
-        cls.cameras = {
-            name: GstreamerCamera(name, GstreamerSourceDetails(**camera_details))
+        cls.camera_details = {
+            name: GstreamerSourceDetails(**camera_details)
             for name, camera_details in details['cameras'].items()
         }
 
+        cls.cameras = {
+            name: GstreamerCamera(name, details)
+            for name, details in cls.camera_details.items()
+        }
+
         cls.users = {
-            name: UserHashed(**data)
-            for name, data in details['users'].items()
+            data['username']: UserHashed(**data)
+            for data in details['users']
         }
 
         cls.secret_key = details['secret_key']

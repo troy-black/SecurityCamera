@@ -42,7 +42,6 @@ class FastApiBaseTester(unittest.TestCase):
                     'height': 720,
                     'framerate': 15,
                     'nvvidconv': 'video/x-raw(memory:NVMM)',
-                    'autostart': False,
                     'recorder': {
                         'record_framerate': 30,
                         'playback_framerate': 30,
@@ -56,12 +55,13 @@ class FastApiBaseTester(unittest.TestCase):
             },
             'log_level': 'DEBUG',
             'secret_key': 'thisismeantasanexamplefordevelopmentpurposesonlypleaseupdatethis',
-            'users': {
-                'admin': {
-                    'username': 'admin',
-                    'hashed_password': '$2b$12$0808RGj0w02ApEj6Z/aTWOBxTVH0mIJmvJYpP6PRPOrRNa2lmrrRa'
+            'users': [
+                {
+                    'username': 'unittest',
+                    'hashed_password': '$2b$12$iSdHLupYMvdiQ1/3ggLn/.TY0pisY/jtpkXh8fvL7SVdahyJoYU2y',
+                    'access': ['Camera']
                 }
-            }
+            ]
         })
 
         logger.setup_logging(config.Config.log_level, False)
