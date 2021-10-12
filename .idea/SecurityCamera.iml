@@ -17,4 +17,11 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Python 3.8 (SecurityCamera) interpreter library" level="application" />
   </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/tdb/securitycamera/templates" />
+      </list>
+    </option>
+  </component>
 </module>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link crossorigin="anonymous" href="../static/css/bootstrap.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Login</title>
+</head>
+<body>
+<form id="loginForm">
+    <h1>Login</h1>
+    <p id="loginStatus"></p>
+    <label for="loginInput">
+        Username
+        <input id="loginInput" name="username" placeholder="username" type="text">
+    </label>
+    <label for="loginPasswordInput">
+        Password
+        <input id="loginPasswordInput" name="password" placeholder="Password" type="password">
+    </label>
+    <input id="loginSubmit" type="submit" value="Submit">
+</form>
+</body>
+<script>
+    const loginSubmit = document.getElementById("loginSubmit");
+    loginSubmit.onclick = (ev) => {
+        ev.preventDefault();
+        const loginForm = document.getElementById("loginForm")
+        const data = new FormData(loginForm)
+        let xmlHttpRequest = new XMLHttpRequest();
+        xmlHttpRequest.open("POST", "/auth/login", true);
+
+        xmlHttpRequest.onload = (ev) => {
+            const status = document.getElementById("loginStatus")
+            const responseData = JSON.parse(xmlHttpRequest.responseText)
+            if (xmlHttpRequest.status === 200) {
+                window.location.href = "/camera/dashboard";
+            } else {
+                status.innerText = "Error logging in: " + responseData.detail
+            }
+        }
+
+        xmlHttpRequest.send(data)
+    }
+</script>
+</html>

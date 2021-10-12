@@ -1,26 +1,5 @@
 {
   "cameras": {
-    "testCam": {
-      "element": "videotestsrc",
-      "properties": {
-        "pattern": "ball"
-      },
-      "caps": "video/x-raw",
-      "width": 1280,
-      "height": 720,
-      "framerate": 5,
-      "nvvidconv": "video/x-raw(memory:NVMM)",
-      "overlay": true,
-      "recorder": {
-        "record_framerate": 1,
-        "playback_framerate": 30,
-        "properties": {
-          "location": "test_%02d.mp4",
-          "max-files": 3,
-          "max-size-bytes": 5000000
-        }
-      }
-    },
     "cam0": {
       "element": "nvarguscamerasrc",
       "properties": {
@@ -31,7 +10,6 @@
       "height": 2288,
       "framerate": 30,
       "overlay": true,
-      "autostart": true,
       "recorder": {
         "record_framerate": 1,
         "playback_framerate": 30,
@@ -52,7 +30,6 @@
       "height": 2288,
       "framerate": 30,
       "overlay": true,
-      "autostart": true,
       "recorder": {
         "record_framerate": 1,
         "playback_framerate": 30,
@@ -64,5 +41,15 @@
       }
     }
   },
-  "log_level": "DEBUG"
+  "log_level": "DEBUG",
+  "secret_key": "thisismeantasanexamplefordevelopmentpurposesonlypleaseupdatethis",
+  "users": [
+    {
+      "username": "admin",
+      "hashed_password": "$2b$12$0808RGj0w02ApEj6Z/aTWOBxTVH0mIJmvJYpP6PRPOrRNa2lmrrRa",
+      "access": [
+        "Camera"
+      ]
+    }
+  ]
 }

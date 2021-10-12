@@ -9,16 +9,25 @@ class ConfigTester(FastApiBaseTester):
                 'testCam01': {
                     'element': 'videotestsrc',
                     'properties': {
-                        'pattern': 'snow'
+                        'pattern': 'ball'
                     },
                     'caps': 'video/x-raw',
                     'width': 1280,
                     'height': 720,
                     'framerate': 5,
-                    'nvvidconv': 'video/x-raw(memory:NVMM)'
+                    'nvvidconv': 'video/x-raw(memory:NVMM)',
+                    'overlay': True
                 }
             },
-            'log_level': 'CRITICAL'
+            'log_level': 'CRITICAL',
+            'secret_key': 'unittest',
+            'users': [
+                {
+                    'username': 'fakeUsername',
+                    'hashed_password': 'fakePassword',
+                    'access': ['Camera']
+                }
+            ]
         })
 
         self.assertIn('testCam01', config.Config.cameras)
