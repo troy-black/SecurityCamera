@@ -1,0 +1,15 @@
+[Unit]
+Description=SecurityCamera Service
+After=network.target
+StartLimitBurst=5
+StartLimitIntervalSec=300
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+WorkingDirectory=~/SecurityCamera
+ExecStart=~/SecurityCamera/venv/bin/python ~/SecurityCamera/securitycamera.py
+
+[Install]
+WantedBy=multi-user.target
